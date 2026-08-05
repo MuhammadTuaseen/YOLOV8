@@ -1,102 +1,99 @@
-# YOLOV8
-kidney stone detection model
+# Kidney Stone Detection with YOLOv8
 
+This project trains a YOLOv8 object-detection model to locate kidney stones in medical images. The complete workflow—dataset download, exploratory visualisation, training, evaluation, and inference—is contained in the [Jupyter notebook](KIDNEY_STONE_DETECTION_USING_YOLO_V8.ipynb).
 
+> **Important:** This is an educational machine-learning project, not a clinical diagnostic tool. Do not use its predictions to make medical decisions.
 
-The code provided in the Jupyter Notebook "KIDNEY_STONE_DETECTION_USING_YOLO_V8.ipynb" is a project related to kidney stone detection using the YOLOv8 model. Below is an outline of the key components and suggested content for a README file:
+## What the notebook does
 
----
+- Downloads the Kaggle kidney-stone image dataset.
+- Displays annotated training samples.
+- Fine-tunes a pretrained `yolov8x.pt` detector for 50 epochs.
+- Plots training losses, precision, recall, and mAP metrics.
+- Evaluates the best checkpoint on the test split.
+- Runs predictions on randomly selected test images.
 
-# Kidney Stone Detection using YOLOv8
+## Requirements
 
-This repository contains the code for detecting kidney stones in medical images using the YOLOv8 object detection model. The project leverages deep learning techniques to train and evaluate the model on a dataset of kidney stone images.
-
-## Project Overview
-
-Kidney stones are a common medical condition, and early detection can help in timely treatment. In this project, we use the YOLOv8 (You Only Look Once) object detection algorithm to detect kidney stones in medical images efficiently. The implementation is done in Python using popular libraries like `ultralytics` for YOLO, `matplotlib`, and `OpenCV`.
-
-## Features
-- Download and use a kidney stone image dataset from Kaggle.
-- Train and evaluate the YOLOv8 model on the dataset.
-- Visualize results using heatmaps, bounding boxes, and other techniques.
-- A streamlined pipeline to detect kidney stones with high accuracy.
-
-## Installation
-
-To get started with the project, clone the repository and install the required dependencies.
-
-### Requirements
-- Python 3.x
-- Jupyter Notebook
-- YOLOv8 via the `ultralytics` package
-- Other Python libraries: `matplotlib`, `pandas`, `opencv-python`, `seaborn`, `squarify`, and `kaggle`
-
-You can install the necessary packages using the following commands:
+The notebook is written for **Google Colab** and Python 3. Install the required packages:
 
 ```bash
-pip install ultralytics
-pip install squarify
-pip install matplotlib opencv-python seaborn pandas kaggle
+pip install ultralytics squarify matplotlib opencv-python pandas seaborn kaggle
 ```
 
-## Dataset
+You will also need a Kaggle account and API token (`kaggle.json`) to download the dataset.
 
-The project uses the [Kidney Stone Image Dataset](https://www.kaggle.com/datasets/safurahajiheidari/kidney-stone-images), which can be downloaded using Kaggle's API. Ensure you have your Kaggle API credentials set up. The dataset will be automatically downloaded when you run the notebook.
+## Dataset setup
 
-To set up Kaggle API:
-1. Go to your Kaggle account and download your `kaggle.json` file.
-2. Upload the file to the notebook and move it to the correct directory.
+The notebook downloads the [Kidney Stone Image Dataset](https://www.kaggle.com/datasets/safurahajiheidari/kidney-stone-images):
 
-```python
-from google.colab import files
-uploaded = files.upload()
-
-# Move the file to where Kaggle expects it
-!mkdir -p ~/.kaggle/ && mv kaggle.json ~/.kaggle/ && chmod 600 ~/.kaggle/kaggle.json
-```
-
-Download the dataset:
 ```bash
-!kaggle datasets download -d safurahajiheidari/kidney-stone-images
+kaggle datasets download -d safurahajiheidari/kidney-stone-images
+unzip kidney-stone-images.zip
 ```
 
-## Usage
+For Colab, upload `kaggle.json` when prompted and place it in `~/.kaggle/` with restricted permissions:
 
-After setting up the environment and dataset, you can run the code cells in the notebook to:
-1. Load the YOLOv8 model.
-2. Train the model on kidney stone images.
-3. Visualize the results using bounding boxes and class heatmaps.
-
-### Loading YOLOv8
-```python
-from ultralytics import YOLO
-
-model = YOLO('yolov8n.pt')  # Load pre-trained YOLOv8 model
+```bash
+mkdir -p ~/.kaggle
+mv kaggle.json ~/.kaggle/
+chmod 600 ~/.kaggle/kaggle.json
 ```
 
-### Training the Model
-You can fine-tune the YOLOv8 model on the kidney stone dataset:
-```python
-model.train(data='path_to_dataset.yaml', epochs=50)
+After extraction, the notebook expects a YOLO-format dataset similar to:
+
+```text
+/content/
+├── data.yaml
+├── train/
+│   ├── images/
+│   └── labels/
+├── valid/
+│   ├── images/
+│   └── labels/
+└── test/
+    ├── images/
+    └── labels/
 ```
 
-### Detection and Visualization
-Run detection on the test dataset and visualize the results:
-```python
-results = model.predict(source='path_to_test_images/', save=True, conf=0.5)
-```
+If you run locally instead of in Colab, update the `/content/...` paths in the notebook to match your machine.
 
-### Visualization
-Use `matplotlib` and `opencv` to visualize the predicted bounding boxes and compare ground truth vs. predictions.
+## Run the project
 
-## Results
+1. Open `KIDNEY_STONE_DETECTION_USING_YOLO_V8.ipynb` in Google Colab or Jupyter.
+2. Install the dependencies and configure your Kaggle API token.
+3. Run the cells in order to download and extract the dataset.
+4. Confirm that `data.yaml` points to the train, validation, and test image folders.
+5. Run the training cell:
 
-The model can detect kidney stones with a high degree of accuracy, visualizing the bounding boxes on the detected stones in the images.
+   ```python
+   from ultralytics import YOLO
 
-## Contributing
+   model = YOLO("yolov8x.pt")
+   model.train(data="/content/data.yaml", seed=42, epochs=50, lr0=0.001)
+   ```
 
-Feel free to contribute to this project by opening issues or submitting pull requests.
+6. Evaluate the best trained weights:
+
+   ```python
+   model = YOLO("/content/runs/detect/train/weights/best.pt")
+   metrics = model.val(conf=0.25, split="test")
+   ```
+
+Training outputs, including `results.csv`, metric plots, the confusion matrix, and `best.pt`, are written under `/content/runs/detect/train/` by default.
+
+## Repository contents
+
+| File | Description |
+| --- | --- |
+| `KIDNEY_STONE_DETECTION_USING_YOLO_V8.ipynb` | End-to-end Colab/Jupyter workflow for training, evaluation, and inference. |
+| `README.md` | Project setup and usage guide. |
+
+## Notes
+
+- `yolov8x.pt` is the largest standard YOLOv8 checkpoint and generally needs a GPU runtime. For faster, lower-resource experiments, replace it with `yolov8n.pt` or another YOLOv8 checkpoint.
+- Results vary with the dataset version, hardware, package versions, and training configuration. The repository does not include pretrained weights or a published benchmark score.
 
 ## License
 
-This project is licensed under the MIT License.
+No license file is currently included in this repository. Contact the repository owner before reusing the code or trained outputs outside personal or educational use.
